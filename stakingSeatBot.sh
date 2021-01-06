@@ -6,21 +6,20 @@ DEBUG_MIN=1
 
 NETWORK="guildnet"
 GUILDNET_EPOCH_LEN=5000
-# BETANET_EPOCH_LEN=10000
-#TESTNET=43200
-# MAINET=43200
+BETANET_EPOCH_LEN=10000
+TESTNET=43200
+MAINET=43200
 ADD0=000000000000000000000000
 
 export NEAR_ENV=$NETWORK
-export NODE_PATH=/home/cryptosolutions/node_modules/
 
 HOST="https://rpc.openshards.io"
-POOL_ID="node0.stake.guildnet"
-pool_id1='"node0.stake.guildnet"'
-ACCOUNT_ID="node0.guildnet"
-#PUBLIC_KEY="ed25519:HKGjaHYZ5nU9tV6ZZemHKtri54FxTLipAJDvDmYtDQhA"
+POOL_ID="???.stake.guildnet"
+pool_id1='"???.stake.guildnet"'
+ACCOUNT_ID="???.guildnet"
+#PUBLIC_KEY=""
 SEAT_PRICE_BUFFER=4000
-NUM_SEATS_TO_OCCUPY=1
+NUM_SEATS_TO_OCCUPY=???
 
 PARAMS='{"jsonrpc": "2.0", "method": "validators", "id": "dontcare", "params": [null]}'
 CT='Content-Type: application/json'
@@ -58,11 +57,17 @@ then
   echo "Last Block: $LAST_BLOCK"
 fi
 
+BLOCKS_COMPLETED=$((LAST_BLOCK - EPOCH_START))
+BLOCKS_REMAINING=$((BLOCKS_COMPLETED - GUILDNET_EPOCH_LEN))
+if [ "$DEBUG_MIN" == "1" ]
+then
+  echo "Blocks Completed: $BLOCKS_COMPLETED"
+  echo "Blocks Remaining: $BLOCKS_REMAINING"
+fi
+
 CURRENT_STAKE_S=$(echo "$VALIDATORS" | jq -c '.result.current_validators[] | select(.account_id | contains ('$pool_id1'))' | jq .stake)
 CURRENT_STAKE_L=(${CURRENT_STAKE_S//\"/})
 CURRENT_STAKE="${CURRENT_STAKE_L%????????????????????????}"
-
-
 if [[ "$DEBUG_MIN" == "1" && "$CURRENT_STAKE_S" ]]
 then
   echo "Current Stake: $CURRENT_STAKE"
@@ -71,8 +76,6 @@ then
   else
   echo "$POOL_ID is not listed in the proposals for the current epoch"
 fi
-
-
 
 VALIDATOR_NEXT_STAKE_S=$(echo "$VALIDATORS" | jq -c ".result.next_validators[] | select(.account_id | contains (\"$POOL_ID\"))" | jq .stake)
 VALIDATOR_NEXT_STAKE_L=(${VALIDATOR_NEXT_STAKE_S//\"/})
@@ -107,11 +110,9 @@ PROPOSAL_STAKE=$(echo $PROPOSAL_STAKE | sed 's/[^0-9]*//g')
 echo "Our Proposal: $OUR_PROPOSAL"
 echo "Our Proposal_S: $OUR_PROPOSAL_S"
 echo "Our Proposal Stake: $PROPOSAL_STAKE"
-#OUR_PROPOSAL=$(near proposals | awk "/$POOL_ID/ {print substr("$6", 1)}")
-#OUR_PROPOSAL="${OUR_PROPOSAL/$COMMA/}"
 #echo $VALIDATORS | jq -c ".result.current_proposals[]"
 PROPOSAL_REASON=$(echo "$VALIDATORS" | jq -c ".result.current_proposals[] | select(.account_id | contains (\"$POOL_ID\"))" | jq .reason)
-echo "Proposal Reason: $PROPOSAL_REASON"
+echo Proposal Reason: "$PROPOSAL_REASON"
 fi
 
 
@@ -145,6 +146,7 @@ fi
 SEAT_PRICE_PROPOSALS=$(near proposals | awk '/price =/ {print substr($15, 1, length($15)-1)}')
 SEAT_PRICE_PROPOSALS="${SEAT_PRICE_PROPOSALS/$COMMA/}"
 SEAT_PRICE_PROPOSALS=$((SEAT_PRICE_PROPOSALS * NUM_SEATS_TO_OCCUPY))
+SEAT_PRICE_PROPOSALS=$((SEAT_PRICE_PROPOSALS + SEAT_PRICE_BUFFER))
 
 if [ "$DEBUG_MIN" == "1" ]
 then
@@ -170,31 +172,31 @@ then
     echo "Validator Current Proposal = $PROPOSAL_STAKE" 
     echo "Seat Price Buffer = $SEAT_PRICE_BUFFER"
     SEAT_PRICE_DIFF=$((SEAT_PRICE_PROPOSALS - PROPOSAL_STAKE ))
-    SEAT_PRICE_DIFF=$((SEAT_PRICE_DIFF + SEAT_PRICE_BUFFER))
+    if [ $SEAT_PRICE_DIFF -gt 500 ]
+    then
     SEAT_PRICE_DIFF=$(echo \"$SEAT_PRICE_DIFF$ADD0\")
-    
     stake $SEAT_PRICE_DIFF
     echo Stake increased by "$SEAT_PRICE_DIFF"
+    fi
 fi
 
 # OPTION 2
-ADJUST=$((SEAT_PRICE_PROPOSALS + SEAT_PRICE_BUFFER))
-echo $ADJUST is the seat price plus buffer
-if [[ "$PROPOSAL_STAKE" -gt "$ADJUST" ]]
+
+if [[ "$PROPOSAL_STAKE" -gt "$SEAT_PRICE_PROPOSALS" ]]
 then
-    echo "$PROPOSAL_STAKE is greater than $ADJUST" 
-    echo "Network Proposal Seat Price = $ADJUST"
+    echo "$PROPOSAL_STAKE is greater than $SEAT_PRICE_PROPOSALS" 
+    echo "Network Proposal Seat Price = $SEAT_PRICE_PROPOSALS"
     echo "Validator Current Proposal = $PROPOSAL_STAKE" 
     echo "Seat Price Buffer = $SEAT_PRICE_BUFFER"
 
-    SEAT_PRICE_DIFF=$((PROPOSAL_STAKE - ADJUST))
+    SEAT_PRICE_DIFF=$((PROPOSAL_STAKE - SEAT_PRICE_PROPOSALS))
     echo "Stake Diff: $SEAT_PRICE_DIFF"
     NEW_PROPOSAL_NUMBERS=$(echo $SEAT_PRICE_DIFF | sed 's/[^0-9]*//g')
     NEW_PROPOSAL_NUMBERS=$((SEAT_PRICE_DIFF + SEAT_PRICE_BUFFER))
-    AMOUNT=\"$NEW_PROPOSAL_NUMBERS$ADD0\"
-
-    if [ "$AMOUNT" -gt 10000 ]
+  
+    if [[ "$NEW_PROPOSAL_NUMBERS" -gt 10000 ]]
     then
+    AMOUNT=\"$NEW_PROPOSAL_NUMBERS$ADD0\"
     echo "Decreasing stake by: ${AMOUNT}"
     unstake "$AMOUNT"
     fi
@@ -204,4 +206,3 @@ fi
 echo "Script Done"
 echo "----------- "
 echo " "
-
