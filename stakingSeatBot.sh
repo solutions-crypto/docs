@@ -252,7 +252,7 @@ then
     echo "Validator Current Proposal = $PROPOSAL_STAKE" 
     echo "Seat Price Buffer = $SEAT_PRICE_BUFFER"
     SEAT_PRICE_DIFF=$((SEAT_PRICE_PROPOSALS - PROPOSAL_STAKE ))
-    # If the difference between $SEAT_PRICE_PROPOSALS + $SEAT_PRICE_BUFFER - $PROPOSAL_STAKE is greater than 2000 increase stake by difference
+    # If the difference between $SEAT_PRICE_PROPOSALS + $SEAT_PRICE_BUFFER - $PROPOSAL_STAKE is greater than 4500 increase stake by difference
     # Since the buffer is greater than 10k this should not cause a problem 
     # The price buffer is added to the Network Proposal Price before calculation so even if we are 4k under the price we are still 5k over the minimum
     if [ $SEAT_PRICE_DIFF -gt 4500 ]
@@ -284,6 +284,8 @@ then
       AMOUNT=\"$NEW_PROPOSAL_NUMBERS$ADD0\"
       echo "Decreasing stake by: ${AMOUNT}"
       unstake "$AMOUNT"
+    else
+    echo "The seat price difference of: $NEW_PROPOSAL_NUMBERS is not sufficent to trigger a transaction"
     fi
 fi
 
