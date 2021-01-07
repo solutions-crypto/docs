@@ -286,13 +286,16 @@ fi
 # Stake is more than the Seat Price
 if [[ "$PROPOSAL_STAKE" -gt "$SEAT_PRICE_PROPOSALS" ]]
 then
+    SEAT_PRICE_DIFF=$((PROPOSAL_STAKE - SEAT_PRICE_PROPOSALS))
+    if [ "$DEBUG_MIN" == "1" ]
+    then
     echo "$PROPOSAL_STAKE is greater than $SEAT_PRICE_PROPOSALS" 
     echo "Network Proposal Seat Price = $SEAT_PRICE_PROPOSALS"
     echo "Validator Current Proposal = $PROPOSAL_STAKE" 
     echo "Seat Price Buffer = $SEAT_PRICE_BUFFER"
-
-    SEAT_PRICE_DIFF=$((PROPOSAL_STAKE - SEAT_PRICE_PROPOSALS))
     echo "Stake Diff: $SEAT_PRICE_DIFF"
+    fi
+    
     NEW_PROPOSAL_NUMBERS=$(echo $SEAT_PRICE_DIFF | sed 's/[^0-9]*//g')
     if [[ "$NEW_PROPOSAL_NUMBERS" -gt 10000 ]]
     then
