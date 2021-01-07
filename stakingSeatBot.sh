@@ -246,34 +246,37 @@ function unstake
 
 if [[ "$PROPOSAL_STAKE" -lt "$SEAT_PRICE_PROPOSALS" ]]
 then
-    echo "$PROPOSAL_STAKE is less than $SEAT_PRICE_PROPOSALS"
-
+    if [ "$DEBUG_MIN" == "1" ]
+    then
     echo "Network Proposal Seat Price = $SEAT_PRICE_PROPOSALS"
     echo "Validator Current Proposal = $PROPOSAL_STAKE" 
     echo "Seat Price Buffer = $SEAT_PRICE_BUFFER"
+    fi
+    
     SEAT_PRICE_DIFF=$((SEAT_PRICE_PROPOSALS - PROPOSAL_STAKE ))
-    # If the difference between $SEAT_PRICE_PROPOSALS + $SEAT_PRICE_BUFFER - $PROPOSAL_STAKE is greater than 2000 increase stake by difference
-    # Since the buffer is greater than 10k this should not cause a problem 
-    # The price buffer is added to the Network Proposal Price before calculation so even if we are 4k under the price we are still 5k over the minimum
+    echo "$PROPOSAL_STAKE is less than $SEAT_PRICE_PROPOSALS"
+    # If the difference between $SEAT_PRICE_PROPOSALS + $SEAT_PRICE_BUFFER and $PROPOSAL_STAKE is greater than 4500 
+    # Check that the accountId has the funds available then increase stake by difference
+    
     if [ $SEAT_PRICE_DIFF -gt 4500 ]
     then
     UNSTAKED_BALANCE=$(near view stakeu.stake.guildnet get_account_unstaked_balance '{"account_id": '\"$ACCOUNT_ID\"'}' | tail -n 1)
     UNSTAKED_BALANCE=$(echo $UNSTAKED_BALANCE | sed 's/[^0-9]*//g')
     UNSTAKED_BALANCE=${UNSTAKED_BALANCE%????????????????????????}
-    if [[ "$UNSTAKED_BALANCE" -lt "$SEAT_PRICE_DIFF" ]]
-    then
-
-    STAKE_SHORTFALL=$((SEAT_PRICE_DIFF - UNSTAKED_BALANCE))
     
-    echo "The current account $ACCOUNT_ID is $STAKE_SHORTFALL NEAR short of the required Unstaked Balance needed"
-    echo "Please try to reduce your requested number of seats or increase the available Unstaked Balance for $ACCOUNT_ID"
-    exit
-    fi
+      if [[ "$UNSTAKED_BALANCE" -lt "$SEAT_PRICE_DIFF" ]]
+      then
+      STAKE_SHORTFALL=$((SEAT_PRICE_DIFF - UNSTAKED_BALANCE))
+      echo "The current account $ACCOUNT_ID is $STAKE_SHORTFALL NEAR short of the Unstaked Balance needed for the scheduled transaction"
+      echo "Please try to reduce your requested number of seats or increase the available Unstaked Balance for $ACCOUNT_ID"
+      exit
+      fi
+    
     SEAT_PRICE_DIFF=$(echo \"$SEAT_PRICE_DIFF$ADD0\")
     stake $SEAT_PRICE_DIFF
     echo Stake increased by "$SEAT_PRICE_DIFF"
     else
-    echo "The seat price difference of: $SEAT_PRICE_DIFF is not sufficent to trigger a transaction"
+      echo "The seat price difference of: $SEAT_PRICE_DIFF is not sufficent to trigger a transaction"
     fi
 fi
 
