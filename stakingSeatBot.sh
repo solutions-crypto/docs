@@ -19,11 +19,9 @@ MAINET_EPOCH_LEN=43200
 # Additional Script Configuration
 ADD0=000000000000000000000000
 SEAT_PRICE_BUFFER=10000
-#PARAMS='{"jsonrpc": "2.0", "method": "validators", "id": "dontcare", "params": [null]}'
-#CT='Content-Type: application/json'
 COMMA=","
 #DOUBLE_QUOTE="\""
-#PUBLIC_KEY=""
+
 
 # Export the network to the environment
 export NEAR_ENV=$NETWORK
@@ -58,6 +56,11 @@ echo "---------------"
 if [ "$POOL_ID" == "???" ]
 then
 echo "You have not properly configured this script. Please edit the file and replace every instance of ??? with valid data"
+fi
+
+PUBLIC_KEY="near view $POOL_ID get_staking_key '{}' | tail -n 1"
+if [ "$DEBUG_ALL" == "1" ]
+echo "The public key retrieved from the network for $POOL_ID is: $PUBLIC_KEY"
 fi
 
 VALIDATORS=$(curl -s -d '{"jsonrpc": "2.0", "method": "validators", "id": "dontcare", "params": [null]}' -H 'Content-Type: application/json' $HOST )
