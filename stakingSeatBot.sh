@@ -291,7 +291,7 @@ fi
 
 if [[ "$PROPOSAL_STAKE" = "$SEAT_PRICE_PROPOSALS" ]]
 then
-echo "The proposal stake and seat price are equal"
+echo "The proposal stake and seat price are equal no action will be taken"
 fi
 
 echo "Script Done"
