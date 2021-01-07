@@ -257,6 +257,8 @@ then
     # The price buffer is added to the Network Proposal Price before calculation so even if we are 4k under the price we are still 5k over the minimum
     if [ $SEAT_PRICE_DIFF -gt 4500 ]
     then
+    # TODO Check to ensure accountId has enough balance to perform action or we will get this sometimes
+    # Failure [blah.stake.guildnet]: Error: Smart contract panicked: panicked at &#39;Not enough unstaked balance to stake&#39;, src&#x2F;internal.rs:92:9
     SEAT_PRICE_DIFF=$(echo \"$SEAT_PRICE_DIFF$ADD0\")
     stake $SEAT_PRICE_DIFF
     echo Stake increased by "$SEAT_PRICE_DIFF"
