@@ -252,13 +252,23 @@ then
     echo "Validator Current Proposal = $PROPOSAL_STAKE" 
     echo "Seat Price Buffer = $SEAT_PRICE_BUFFER"
     SEAT_PRICE_DIFF=$((SEAT_PRICE_PROPOSALS - PROPOSAL_STAKE ))
-    # If the difference between $SEAT_PRICE_PROPOSALS + $SEAT_PRICE_BUFFER - $PROPOSAL_STAKE is greater than 4500 increase stake by difference
+    # If the difference between $SEAT_PRICE_PROPOSALS + $SEAT_PRICE_BUFFER - $PROPOSAL_STAKE is greater than 2000 increase stake by difference
     # Since the buffer is greater than 10k this should not cause a problem 
     # The price buffer is added to the Network Proposal Price before calculation so even if we are 4k under the price we are still 5k over the minimum
     if [ $SEAT_PRICE_DIFF -gt 4500 ]
     then
-    # TODO Check to ensure accountId has enough balance to perform action or we will get this sometimes
-    # Failure [blah.stake.guildnet]: Error: Smart contract panicked: panicked at &#39;Not enough unstaked balance to stake&#39;, src&#x2F;internal.rs:92:9
+    UNSTAKED_BALANCE=$(near view stakeu.stake.guildnet get_account_unstaked_balance '{"account_id": '\"$ACCOUNT_ID\"'}' | tail -n 1)
+    UNSTAKED_BALANCE=$(echo $UNSTAKED_BALANCE | sed 's/[^0-9]*//g')
+    UNSTAKED_BALANCE=${UNSTAKED_BALANCE%????????????????????????}
+    if [[ "$UNSTAKED_BALANCE" -lt "$SEAT_PRICE_DIFF" ]]
+    then
+
+    STAKE_SHORTFALL=$((SEAT_PRICE_DIFF - UNSTAKED_BALANCE))
+    
+    echo "The current account $ACCOUNT_ID is $STAKE_SHORTFALL NEAR short of the required Unstaked Balance needed"
+    echo "Please try to reduce your requested number of seats or increase the available Unstaked Balance for $ACCOUNT_ID"
+    exit
+    fi
     SEAT_PRICE_DIFF=$(echo \"$SEAT_PRICE_DIFF$ADD0\")
     stake $SEAT_PRICE_DIFF
     echo Stake increased by "$SEAT_PRICE_DIFF"
