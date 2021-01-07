@@ -245,26 +245,27 @@ function unstake
 }
 
 
+# Stake is less than the Seat Price
 if [[ "$PROPOSAL_STAKE" -lt "$SEAT_PRICE_PROPOSALS" ]]
 then
+    SEAT_PRICE_DIFF=$((SEAT_PRICE_PROPOSALS - PROPOSAL_STAKE ))
     if [ "$DEBUG_MIN" == "1" ]
     then
-    echo "Network Proposal Seat Price = $SEAT_PRICE_PROPOSALS"
-    echo "Validator Current Proposal = $PROPOSAL_STAKE" 
-    echo "Seat Price Buffer = $SEAT_PRICE_BUFFER"
+      echo "Network Proposal Seat Price = $SEAT_PRICE_PROPOSALS"
+      echo "Validator Current Proposal = $PROPOSAL_STAKE" 
+      echo "Seat Price Buffer = $SEAT_PRICE_BUFFER"
+      echo "$PROPOSAL_STAKE is less than $SEAT_PRICE_PROPOSALS"
     fi
     
-    SEAT_PRICE_DIFF=$((SEAT_PRICE_PROPOSALS - PROPOSAL_STAKE ))
-    echo "$PROPOSAL_STAKE is less than $SEAT_PRICE_PROPOSALS"
     # If the difference between $SEAT_PRICE_PROPOSALS + $SEAT_PRICE_BUFFER and $PROPOSAL_STAKE is greater than 4500 
     # Check that the accountId has the funds available then increase stake by difference
-    
     if [ $SEAT_PRICE_DIFF -gt 4500 ]
     then
     UNSTAKED_BALANCE=$(near view stakeu.stake.guildnet get_account_unstaked_balance '{"account_id": '\"$ACCOUNT_ID\"'}' | tail -n 1)
     UNSTAKED_BALANCE=$(echo $UNSTAKED_BALANCE | sed 's/[^0-9]*//g')
     UNSTAKED_BALANCE=${UNSTAKED_BALANCE%????????????????????????}
     
+    # Ensure funds are a available for the staking transaction
       if [[ "$UNSTAKED_BALANCE" -lt "$SEAT_PRICE_DIFF" ]]
       then
       STAKE_SHORTFALL=$((SEAT_PRICE_DIFF - UNSTAKED_BALANCE))
@@ -272,7 +273,7 @@ then
       echo "Please try to reduce your requested number of seats or increase the available Unstaked Balance for $ACCOUNT_ID"
       exit
       fi
-    
+    # Get the difference and send the staking transaction
     SEAT_PRICE_DIFF=$(echo \"$SEAT_PRICE_DIFF$ADD0\")
     stake $SEAT_PRICE_DIFF
     echo Stake increased by "$SEAT_PRICE_DIFF"
@@ -282,8 +283,7 @@ then
 fi
 
 
-# OPTION 2
-
+# Stake is more than the Seat Price
 if [[ "$PROPOSAL_STAKE" -gt "$SEAT_PRICE_PROPOSALS" ]]
 then
     echo "$PROPOSAL_STAKE is greater than $SEAT_PRICE_PROPOSALS" 
@@ -304,11 +304,13 @@ then
     fi
 fi
 
+# Stake is equal to the Seat Price
 if [[ "$PROPOSAL_STAKE" = "$SEAT_PRICE_PROPOSALS" ]]
 then
 echo "The proposal stake and seat price are equal no action will be taken"
 fi
 
+# Finished
 echo "Script Done"
 echo "----------- "
 echo " "
