@@ -60,6 +60,7 @@ fi
 
 PUBLIC_KEY="near view $POOL_ID get_staking_key '{}' | tail -n 1"
 if [ "$DEBUG_ALL" == "1" ]
+then
 echo "The public key retrieved from the network for $POOL_ID is: $PUBLIC_KEY"
 fi
 
