@@ -7,7 +7,6 @@ DEBUG_MIN=0
 # SETTINGS
 NETWORK="???"
 POOL_ID="???"
-pool_id1='"???"'
 ACCOUNT_ID="???"
 NUM_SEATS_TO_OCCUPY=???
 
@@ -122,7 +121,7 @@ echo "Blocks Remaining: $BLOCKS_REMAINING"
 echo "Epoch Minutes Remaining: $EPOCH_MINS_REMAINING"
 fi
 
-CURRENT_STAKE_S=$(echo "$VALIDATORS" | jq -c '.result.current_validators[] | select(.account_id | contains ('$pool_id1'))' | jq .stake)
+CURRENT_STAKE_S=$(echo "$VALIDATORS" | jq -c ".result.current_validators[] | select(.account_id | contains (\"$POOL_ID\"))" | jq .stake)
 CURRENT_STAKE_L=(${CURRENT_STAKE_S//\"/})
 CURRENT_STAKE="${CURRENT_STAKE_L%????????????????????????}"
 
